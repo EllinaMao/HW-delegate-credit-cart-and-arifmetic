@@ -1,49 +1,119 @@
-﻿namespace homework
+﻿class Program
 {
-    internal class Program
+    static void Main(string[] args)
     {
-        /*
-Задание 1
-Создайте набор методов для работы с массивами:
-■ Метод для получения всех четных чисел в массиве;
-■ Метод для получения всех нечетных чисел в массиве;
-■ Метод для получения всех простых чисел в массиве;
-■ Метод для получения всех чисел Фибоначчи в массиве.
-Используйте механизмы делегатов.
+        Stock stock = new Stock();
+        Bank bank = new Bank("ЮнитБанк", stock);
+        Broker broker = new Broker("Иван Иваныч", stock);
+        // имитация торгов
+        stock.Market();
+        // брокер прекращает наблюдать за торгами
+        broker.StopTrade();
+        // имитация торгов
+        stock.Market();
 
+        Console.Read();
+    }
+}
 
-Задание 2
-Создайте набор методов:
-■ Метод для отображения текущего времени;
-■ Метод для отображения текущей даты;
-■ Метод для отображения текущего дня недели;
-■ Метод для подсчёта площади треугольника;
-■ Метод для подсчёта площади прямоугольника.
-Для реализации проекта используйте делегаты Action,
-Predicate, Func.
+interface IObserver
+{
+    void Update(Object ob);
+}
 
+interface IObservable
+{
+    void RegisterObserver(IObserver o);
+    void RemoveObserver(IObserver o);
+    void NotifyObservers();
+}
 
-Задание 3
-Создайте класс «Кредитная карточка». Класс должен
-содержать:
-■ Номер карты;
-■ ФИО владельца;
-■ Срок действия карты;
-■ PIN;
-■ Кредитный лимит;
-■ Сумма денег.
+class Stock : IObservable
+{
+    StockInfo sInfo; // информация о торгах
 
-Создайте необходимый набор методов класса. Реализуйте события для следующих ситуаций:
-■ Пополнение счёта;
-■ Расход денег со счёта;
-■ Старт использования кредитных денег;
-■ Достижение заданной суммы денег;
-■ Смена PIN
-         
-         */
-        static void Main(string[] args)
+    List<IObserver> observers;
+    public Stock()
+    {
+        observers = new List<IObserver>();
+        sInfo = new StockInfo();
+    }
+    public void RegisterObserver(IObserver o)
+    {
+        observers.Add(o);
+    }
+
+    public void RemoveObserver(IObserver o)
+    {
+        observers.Remove(o);
+    }
+
+    public void NotifyObservers()
+    {
+        foreach (IObserver o in observers)
         {
-            Console.WriteLine("Hello, World!");
+            o.Update(sInfo);
         }
+    }
+
+    public void Market()
+    {
+        Random rnd = new Random();
+        sInfo.USD = rnd.Next(20, 40);
+        sInfo.Euro = rnd.Next(30, 50);
+        NotifyObservers();
+    }
+}
+
+class StockInfo
+{
+    public int USD { get; set; }
+    public int Euro { get; set; }
+}
+
+class Broker : IObserver
+{
+    public string Name { get; set; }
+    IObservable stock;
+    public Broker(string name, IObservable obs)
+    {
+        this.Name = name;
+        stock = obs;
+        stock.RegisterObserver(this);
+    }
+    public void Update(object ob)
+    {
+        StockInfo sInfo = (StockInfo)ob;
+
+            if (sInfo.USD > 30)
+            Console.WriteLine("Брокер {0} продает доллары;  Курс доллара: {1}", this.Name, sInfo.USD);
+        else
+            Console.WriteLine("Брокер {0} покупает доллары;  Курс доллара: {1}", this.Name, sInfo.USD);
+    }
+    public void StopTrade()
+    {
+        stock.RemoveObserver(this);
+        stock = null;
+    }
+}
+
+class Bank : IObserver
+{
+    public string Name { get; set; }
+    IObservable stock;
+    public Bank(string name, IObservable obs)
+    {
+        this.Name = name;
+        stock = obs;
+        stock.RegisterObserver(this);
+    }
+    public void Update(object ob)
+    {
+        StockInfo sInfo = (StockInfo)ob;
+
+        if (sInfo.Euro > 40)
+            Console.WriteLine("Банк {0} продает евро;  Курс евро: {1}", this.Name, sInfo.Euro);
+        else
+            Console.WriteLine("Банк {0} покупает евро;  Курс евро: {1}", this.Name, sInfo.Euro);
     }
 }
